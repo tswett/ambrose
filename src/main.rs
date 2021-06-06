@@ -24,8 +24,13 @@ fn main() -> Result<(), Box<dyn Error>> {
         println!("Turning pin 12 off...");
         pin.set_low();
         thread::sleep(Duration::from_millis(500));
-        println!("Playing an A...");
-        play_a110(&mut pin)?;
+
+        let fundamental: i64 = 100;
+        println!("Playing notes...");
+        play_note(&mut pin, fundamental * 2)?;
+        play_note(&mut pin, fundamental * 3)?;
+        println!("Playing a perfect fifth (maybe)...");
+        play_p5(&mut pin, fundamental)?;
     }
 }
 
@@ -38,22 +43,103 @@ fn wait_until(target_time: TimeSpec) -> Result<(), Box<dyn Error>> {
     Ok(sleep(Duration::from(max(target_time - now()?, TimeSpec::seconds(0)))))
 }
 
-fn play_a110(pin: &mut OutputPin) -> Result<(), Box<dyn Error>> {
-    let frequency = 12800;
+fn pulse(pin: &mut OutputPin, control_time: &mut TimeSpec, delay_ns: i64) -> Result<(), Box<dyn Error>> {
+    *control_time = *control_time + TimeSpec::nanoseconds(delay_ns);
+    wait_until(*control_time)?;
+    pin.set_high();
+    sleep(Duration::from_micros(2));
+    pin.set_low();
+    Ok(())
+}
+
+fn play_note(pin: &mut OutputPin, frequency: i64) -> Result<(), Box<dyn Error>> {
     let start_time: TimeSpec = now()?;
     let mut last_time: TimeSpec = start_time;
     let end_time: TimeSpec = start_time + TimeSpec::seconds(1);
 
     while last_time < end_time {
-        // println!("last_time: {}", last_time);
-        // println!("now: {}", now()?);
-        let mut next_time: TimeSpec = last_time + TimeSpec::nanoseconds(1000000000 / frequency / 2);
-        wait_until(next_time)?;
-        pin.set_high();
-        next_time = next_time + TimeSpec::nanoseconds(1000000000 / frequency / 2);
-        wait_until(next_time)?;
-        pin.set_low();
-        last_time = next_time;
+        pulse(pin, &mut last_time, 1000000000 / frequency)?;
+    }
+
+    Ok(())
+}
+
+fn play_p5(pin: &mut OutputPin, frequency: i64) -> Result<(), Box<dyn Error>> {
+    let start_time: TimeSpec = now()?;
+    let mut last_time: TimeSpec = start_time;
+    let end_time: TimeSpec = start_time + TimeSpec::seconds(1);
+
+    while last_time < end_time {
+        pulse(pin, &mut last_time, 1000000000 / frequency / 4)?;
+        pulse(pin, &mut last_time, 1000000000 / frequency / 12)?;
+        pulse(pin, &mut last_time, 1000000000 / frequency / 3)?;
+        pulse(pin, &mut last_time, 1000000000 / frequency / 12)?;
+        pulse(pin, &mut last_time, 1000000000 / frequency / 4)?;
+        pulse(pin, &mut last_time, 0)?;
+    }
+
+    Ok(())
+}
+
+fn play_p5_v2(pin: &mut OutputPin, frequency: i64) -> Result<(), Box<dyn Error>> {
+    let start_time: TimeSpec = now()?;
+    let mut last_time: TimeSpec = start_time;
+    let end_time: TimeSpec = start_time + TimeSpec::seconds(1);
+
+    while last_time < end_time {
+        pulse(pin, &mut last_time, 1000000000 / frequency / 3)?;
+        pulse(pin, &mut last_time, 0)?;
+        pulse(pin, &mut last_time, 1000000000 / frequency * 2 / 3)?;
+        pulse(pin, &mut last_time, 0)?;
+    }
+
+    Ok(())
+}
+
+fn play_p5_v3(pin: &mut OutputPin, frequency: i64) -> Result<(), Box<dyn Error>> {
+    let start_time: TimeSpec = now()?;
+    let mut last_time: TimeSpec = start_time;
+    let end_time: TimeSpec = start_time + TimeSpec::seconds(1);
+
+    while last_time < end_time {
+        pulse(pin, &mut last_time, 1000000000 / frequency / 3)?;
+        pulse(pin, &mut last_time, 1000000000 / frequency / 3)?;
+        pulse(pin, &mut last_time, 1000000000 / frequency / 3)?;
+        pulse(pin, &mut last_time, 0)?;
+    }
+
+    Ok(())
+}
+
+fn play_p5_v4(pin: &mut OutputPin, frequency: i64) -> Result<(), Box<dyn Error>> {
+    let start_time: TimeSpec = now()?;
+    let mut last_time: TimeSpec = start_time;
+    let end_time: TimeSpec = start_time + TimeSpec::seconds(1);
+
+    while last_time < end_time {
+        pulse(pin, &mut last_time, 1000000000 / frequency / 3)?;
+        pulse(pin, &mut last_time, 1000000000 / frequency / 6)?;
+        pulse(pin, &mut last_time, 1000000000 / frequency / 6)?;
+        pulse(pin, &mut last_time, 1000000000 / frequency / 3)?;
+    }
+
+    Ok(())
+}
+
+fn play_maj3(pin: &mut OutputPin, frequency: i64) -> Result<(), Box<dyn Error>> {
+    let start_time: TimeSpec = now()?;
+    let mut last_time: TimeSpec = start_time;
+    let end_time: TimeSpec = start_time + TimeSpec::seconds(1);
+
+    while last_time < end_time {
+        pulse(pin, &mut last_time, 1000000000 / frequency / 5)?;
+        pulse(pin, &mut last_time, 1000000000 / frequency / 20)?;
+        pulse(pin, &mut last_time, 1000000000 / frequency * 3 / 20)?;
+        pulse(pin, &mut last_time, 1000000000 / frequency / 10)?;
+        pulse(pin, &mut last_time, 1000000000 / frequency / 10)?;
+        pulse(pin, &mut last_time, 1000000000 / frequency * 3 / 20)?;
+        pulse(pin, &mut last_time, 1000000000 / frequency / 20)?;
+        pulse(pin, &mut last_time, 1000000000 / frequency / 5)?;
     }
 
     Ok(())

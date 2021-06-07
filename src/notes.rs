@@ -20,6 +20,16 @@ pub struct NoteInfo {
     pub length: u32,
 }
 
+pub struct Voice {
+    note_index: u32,
+    ticks: u64,
+    phase: i32,
+}
+
+pub fn voice(note_index: u32) -> Voice {
+    Voice { note_index, ticks: 0, phase: 0 }
+}
+
 pub const TICK_FREQUENCY_HZ: u32 = 50000;
 pub const TICK_DURATION_MCS: u32 = 1000000 / TICK_FREQUENCY_HZ;
 pub const FREQ_MULTIPLIER: u32 = (4294967296u64 / TICK_FREQUENCY_HZ as u64) as u32;
@@ -33,129 +43,40 @@ fn wait_until(target_time: TimeSpec) -> Result<(), Box<dyn Error>> {
     Ok(sleep(Duration::from(max(target_time - now()?, TimeSpec::seconds(0)))))
 }
 
-fn pulse(pin: &mut OutputPin, control_time: &mut TimeSpec, delay_ns: i64) -> Result<(), Box<dyn Error>> {
-    *control_time = *control_time + TimeSpec::nanoseconds(delay_ns);
-    wait_until(*control_time)?;
-    pin.set_high();
-    sleep(Duration::from_micros(2));
-    pin.set_low();
-    Ok(())
-}
-
-pub fn play_note(pin: &mut OutputPin, frequency: i64) -> Result<(), Box<dyn Error>> {
-    let start_time: TimeSpec = now()?;
-    let mut last_time: TimeSpec = start_time;
-    let end_time: TimeSpec = start_time + TimeSpec::seconds(1);
-
-    while last_time < end_time {
-        pulse(pin, &mut last_time, 1000000000 / frequency)?;
-    }
-
-    Ok(())
-}
-
-pub fn play_note_info(pin: &mut OutputPin, note: NoteInfo) -> Result<(), Box<dyn Error>> {
+pub fn play_note_info_array(
+    pins: &mut [&mut OutputPin],
+    notes: &mut [NoteInfo],
+    voices: &mut [&mut Voice]
+) -> Result<(), Box<dyn Error>> {
     let start_time: TimeSpec = now()?;
     let mut next_time: TimeSpec = start_time;
-    let mut ticks: u64 = 0;
-    let mut phase: i32 = 0;
 
-    pin.set_low();
+    for pin in &mut *pins { pin.set_low(); }
 
-    while ticks < note.length.into() {
+    loop {
         next_time = next_time + TimeSpec::microseconds(TICK_DURATION_MCS.into());
         wait_until(next_time)?;
-        ticks += 1;
 
-        if phase >= 0 {
-            pin.set_high();
-        } else {
-            pin.set_low();
+        for voice in &mut *voices {
+            let note: NoteInfo = notes[voice.note_index as usize];
+
+            if note.exit {
+                return Ok(());
+            }
+
+            if voice.phase >= 0 {
+                pins[note.motor_id as usize].set_high();
+            } else {
+                pins[note.motor_id as usize].set_low();
+            }
+
+            voice.phase = (voice.phase as i64 + note.frequency as i64) as i32;
+
+            voice.ticks += 1;
+            if voice.ticks >= note.length as u64 {
+                voice.note_index = note.next_note_index;
+                voice.ticks = 0;
+            }
         }
-
-        phase = (phase as i64 + note.frequency as i64) as i32;
     }
-
-    Ok(())
-}
-
-pub fn play_p5(pin: &mut OutputPin, frequency: i64) -> Result<(), Box<dyn Error>> {
-    let start_time: TimeSpec = now()?;
-    let mut last_time: TimeSpec = start_time;
-    let end_time: TimeSpec = start_time + TimeSpec::seconds(1);
-
-    while last_time < end_time {
-        pulse(pin, &mut last_time, 1000000000 / frequency / 4)?;
-        pulse(pin, &mut last_time, 1000000000 / frequency / 12)?;
-        pulse(pin, &mut last_time, 1000000000 / frequency / 3)?;
-        pulse(pin, &mut last_time, 1000000000 / frequency / 12)?;
-        pulse(pin, &mut last_time, 1000000000 / frequency / 4)?;
-        pulse(pin, &mut last_time, 0)?;
-    }
-
-    Ok(())
-}
-
-fn play_p5_v2(pin: &mut OutputPin, frequency: i64) -> Result<(), Box<dyn Error>> {
-    let start_time: TimeSpec = now()?;
-    let mut last_time: TimeSpec = start_time;
-    let end_time: TimeSpec = start_time + TimeSpec::seconds(1);
-
-    while last_time < end_time {
-        pulse(pin, &mut last_time, 1000000000 / frequency / 3)?;
-        pulse(pin, &mut last_time, 0)?;
-        pulse(pin, &mut last_time, 1000000000 / frequency * 2 / 3)?;
-        pulse(pin, &mut last_time, 0)?;
-    }
-
-    Ok(())
-}
-
-fn play_p5_v3(pin: &mut OutputPin, frequency: i64) -> Result<(), Box<dyn Error>> {
-    let start_time: TimeSpec = now()?;
-    let mut last_time: TimeSpec = start_time;
-    let end_time: TimeSpec = start_time + TimeSpec::seconds(1);
-
-    while last_time < end_time {
-        pulse(pin, &mut last_time, 1000000000 / frequency / 3)?;
-        pulse(pin, &mut last_time, 1000000000 / frequency / 3)?;
-        pulse(pin, &mut last_time, 1000000000 / frequency / 3)?;
-        pulse(pin, &mut last_time, 0)?;
-    }
-
-    Ok(())
-}
-
-fn play_p5_v4(pin: &mut OutputPin, frequency: i64) -> Result<(), Box<dyn Error>> {
-    let start_time: TimeSpec = now()?;
-    let mut last_time: TimeSpec = start_time;
-    let end_time: TimeSpec = start_time + TimeSpec::seconds(1);
-
-    while last_time < end_time {
-        pulse(pin, &mut last_time, 1000000000 / frequency / 3)?;
-        pulse(pin, &mut last_time, 1000000000 / frequency / 6)?;
-        pulse(pin, &mut last_time, 1000000000 / frequency / 6)?;
-        pulse(pin, &mut last_time, 1000000000 / frequency / 3)?;
-    }
-
-    Ok(())
-}
-
-fn play_maj3(pin: &mut OutputPin, frequency: i64) -> Result<(), Box<dyn Error>> {
-    let start_time: TimeSpec = now()?;
-    let mut last_time: TimeSpec = start_time;
-    let end_time: TimeSpec = start_time + TimeSpec::seconds(1);
-
-    while last_time < end_time {
-        pulse(pin, &mut last_time, 1000000000 / frequency / 5)?;
-        pulse(pin, &mut last_time, 1000000000 / frequency / 20)?;
-        pulse(pin, &mut last_time, 1000000000 / frequency * 3 / 20)?;
-        pulse(pin, &mut last_time, 1000000000 / frequency / 10)?;
-        pulse(pin, &mut last_time, 1000000000 / frequency / 10)?;
-        pulse(pin, &mut last_time, 1000000000 / frequency * 3 / 20)?;
-        pulse(pin, &mut last_time, 1000000000 / frequency / 20)?;
-        pulse(pin, &mut last_time, 1000000000 / frequency / 5)?;
-    }
-
-    Ok(())
 }

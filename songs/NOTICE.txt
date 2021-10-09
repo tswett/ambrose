@@ -1,0 +1,7 @@
+The contents of this directory (the "songs" directory) have all rights reserved
+and are not released under any license, except as otherwise stated by files
+within the "songs" directory. Statements and licenses outside of the "songs"
+directory do not apply to the contents of the "songs" directory.
+
+The contents of this directory may be derivative works of other pre-existing
+works.

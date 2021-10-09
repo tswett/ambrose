@@ -43,9 +43,9 @@ fn wait_until(target_time: TimeSpec) -> Result<(), Box<dyn Error>> {
 }
 
 pub fn play_note_info_array<M: Motor>(
-    pins: &mut [&mut M],
-    notes: &mut [NoteInfo],
-    voices: &mut [&mut Voice]
+    mut pins: Vec<M>,
+    notes: Vec<NoteInfo>,
+    mut voices: Vec<Voice>
 ) -> Result<(), Box<dyn Error>> {
     let start_time: TimeSpec = now()?;
     let mut next_time: TimeSpec = start_time;
@@ -57,6 +57,7 @@ pub fn play_note_info_array<M: Motor>(
         wait_until(next_time)?;
 
         for voice in &mut *voices {
+            // println!("playing note {}", voice.note_index);
             let note: NoteInfo = notes[voice.note_index as usize];
 
             if note.exit {
@@ -66,7 +67,7 @@ pub fn play_note_info_array<M: Motor>(
             let increment: u64 = note.frequency_mchz * TICK_DURATION_MCS;
             voice.phase = (voice.phase + increment) % 1_000_000_000_000;
 
-            let motor: &mut M = pins[note.motor_id as usize];
+            let motor: &mut M = &mut pins[note.motor_id as usize];
 
             if voice.phase < 500_000_000_000 {
                 motor.advance();
@@ -82,6 +83,8 @@ pub fn play_note_info_array<M: Motor>(
                 if notes[voice.note_index as usize].rearticulate {
                     voice.phase = (voice.phase + 500_000_000_000) % 1_000_000_000_000;
                 }
+
+                // println!("moving on to note {}, frequency {}", voice.note_index, notes[voice.note_index as usize].frequency_mchz);
             }
         }
     }

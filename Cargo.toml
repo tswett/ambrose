@@ -9,3 +9,7 @@ edition = "2018"
 [dependencies]
 nix = "0.20.0"
 rppal = "0.12.0"
+
+[[example]]
+name = "peaceofmind"
+path = "src/peaceofmind.rs"

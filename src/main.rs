@@ -23,14 +23,14 @@ fn note(next_note_index: u32, motor_id: u8, frequency: u32, length: u32) -> Note
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let pins: &mut [&mut GpioMotor] = &mut [
-        &mut gpio_motor(15)?,
-        &mut gpio_motor(14)?,
+    let pins: Vec<GpioMotor> = vec![
+        gpio_motor(15)?,
+        gpio_motor(14)?,
     ];
 
-    let voices: &mut [&mut Voice] = &mut [&mut voice(0), &mut voice(8)];
+    let voices: Vec<Voice> = vec![voice(0), voice(8)];
 
-    let notes: &mut [NoteInfo] = &mut [
+    let notes: Vec<NoteInfo> = vec![
         note( 1, 0, 14712, 120), // d
         note( 2, 0, 11000, 120), // a
         note( 3, 0, 12298, 120), // b

@@ -4,7 +4,10 @@ use rppal::gpio::Gpio;
 use rppal::gpio::OutputPin;
 
 pub trait Motor {
+    /// Command the motor to advance one step. 
     fn advance(&mut self);
+
+    /// Prepare the motor to advance another step later.
     fn reset(&mut self);
 }
 

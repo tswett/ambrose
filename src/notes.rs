@@ -14,25 +14,24 @@ use crate::motor::Motor;
 pub struct NoteInfo {
     pub next_note_index: u32,
     pub motor_id: u8,
-    pub enable_motor: bool,
     pub exit: bool,
-    pub frequency: u32,
-    pub length: u32,
+    pub frequency_mchz: u64,
+    pub length_mcs: u64,
+    pub rearticulate: bool,
 }
 
 pub struct Voice {
     note_index: u32,
-    ticks: u64,
-    phase: i32,
+    microseconds: u64,
+    phase: u64,
 }
 
 pub fn voice(note_index: u32) -> Voice {
-    Voice { note_index, ticks: 0, phase: 0 }
+    Voice { note_index, microseconds: 0, phase: 500_000_000_000 }
 }
 
-pub const TICK_FREQUENCY_HZ: u32 = 50000;
-pub const TICK_DURATION_MCS: u32 = 1000000 / TICK_FREQUENCY_HZ;
-pub const FREQ_MULTIPLIER: u32 = (4294967296u64 / TICK_FREQUENCY_HZ as u64) as u32;
+const TICK_FREQUENCY_HZ: u64 = 50000;
+const TICK_DURATION_MCS: u64 = 1000000 / TICK_FREQUENCY_HZ;
 
 fn now() -> Result<TimeSpec, nix::Error> {
     // return clock_gettime(ClockId::CLOCK_PROCESS_CPUTIME_ID);
@@ -54,7 +53,7 @@ pub fn play_note_info_array<M: Motor>(
     for pin in &mut *pins { pin.reset(); }
 
     loop {
-        next_time = next_time + TimeSpec::microseconds(TICK_DURATION_MCS.into());
+        next_time = next_time + TimeSpec::microseconds(TICK_DURATION_MCS as i64);
         wait_until(next_time)?;
 
         for voice in &mut *voices {
@@ -64,18 +63,25 @@ pub fn play_note_info_array<M: Motor>(
                 return Ok(());
             }
 
-            if voice.phase >= 0 {
-                pins[note.motor_id as usize].advance();
+            let increment: u64 = note.frequency_mchz * TICK_DURATION_MCS;
+            voice.phase = (voice.phase + increment) % 1_000_000_000_000;
+
+            let motor: &mut M = pins[note.motor_id as usize];
+
+            if voice.phase < 500_000_000_000 {
+                motor.advance();
             } else {
-                pins[note.motor_id as usize].reset();
+                motor.reset();
             }
 
-            voice.phase = (voice.phase as i64 + note.frequency as i64) as i32;
-
-            voice.ticks += 1;
-            if voice.ticks >= note.length as u64 {
+            voice.microseconds += TICK_DURATION_MCS;
+            if voice.microseconds >= note.length_mcs {
                 voice.note_index = note.next_note_index;
-                voice.ticks = 0;
+                voice.microseconds -= note.length_mcs;
+
+                if notes[voice.note_index as usize].rearticulate {
+                    voice.phase = (voice.phase + 500_000_000_000) % 1_000_000_000_000;
+                }
             }
         }
     }

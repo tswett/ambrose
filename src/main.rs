@@ -6,10 +6,8 @@ mod notes;
 use crate::motor::GpioMotor;
 use crate::motor::gpio_motor;
 
-use crate::notes::FREQ_MULTIPLIER;
 use crate::notes::NoteInfo;
 use crate::notes::play_note_info_array;
-use crate::notes::TICK_FREQUENCY_HZ;
 use crate::notes::Voice;
 use crate::notes::voice;
 
@@ -17,10 +15,10 @@ fn note(next_note_index: u32, motor_id: u8, frequency: u32, length: u32) -> Note
     NoteInfo {
         next_note_index,
         motor_id,
-        enable_motor: true,
         exit: false,
-        frequency: (frequency as u64 * FREQ_MULTIPLIER as u64 / 100) as u32,
-        length: length * TICK_FREQUENCY_HZ / 100,
+        frequency_mchz: (frequency as u64) * 10000,
+        length_mcs: (length as u64) * 10000,
+        rearticulate: false,
     }
 }
 
@@ -31,7 +29,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     ];
 
     let voices: &mut [&mut Voice] = &mut [&mut voice(0), &mut voice(8)];
-    // let voices: &mut [&mut Voice] = &mut [&mut voice(8)];
 
     let notes: &mut [NoteInfo] = &mut [
         note( 1, 0, 14712, 120), // d
@@ -96,21 +93,28 @@ fn main() -> Result<(), Box<dyn Error>> {
         note(51, 1, 44000,  60), // a
         note(52, 1, 36781,  60), // f#
         note(53, 1, 29425,  60), // d
-        note(54, 1, 58849,  59), // d
-        note(55, 1,     0,   1),
-        note(56, 1, 58849,  90), // d
-        note(57, 1, 55000,  30), // c#
+        note(54, 1, 58849,  60), // d
+        // note(55, 1, 58849,  90), // d
+        NoteInfo {
+            next_note_index: 55,
+            motor_id: 1,
+            exit: false,
+            frequency_mchz: 588_490_000,
+            length_mcs: 900_000,
+            rearticulate: true,
+        },
+        note(56, 1, 55000,  30), // c#
 
 
-        note(58, 1, 58849, 120), // d
+        note(57, 1, 58849, 120), // d
 
         NoteInfo {
             next_note_index: 0,
             motor_id: 1,
-            enable_motor: false,
             exit: true,
-            frequency: 0,
-            length: TICK_FREQUENCY_HZ,
+            frequency_mchz: 0,
+            length_mcs: 1_000_000,
+            rearticulate: false,
         },
     ];
 

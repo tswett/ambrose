@@ -1,9 +1,10 @@
 use std::error::Error;
 
-use rppal::gpio::Gpio;
-use rppal::gpio::OutputPin;
-
+mod motor;
 mod notes;
+
+use crate::motor::GpioMotor;
+use crate::motor::gpio_motor;
 
 use crate::notes::FREQ_MULTIPLIER;
 use crate::notes::NoteInfo;
@@ -24,9 +25,9 @@ fn note(next_note_index: u32, motor_id: u8, frequency: u32, length: u32) -> Note
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let pins: &mut [&mut OutputPin] = &mut [
-        &mut (Gpio::new()?.get(15)?.into_output()),
-        &mut (Gpio::new()?.get(14)?.into_output()),
+    let pins: &mut [&mut GpioMotor] = &mut [
+        &mut gpio_motor(15)?,
+        &mut gpio_motor(14)?,
     ];
 
     let voices: &mut [&mut Voice] = &mut [&mut voice(0), &mut voice(8)];

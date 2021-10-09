@@ -8,7 +8,7 @@ use nix::sys::time::TimeValLike;
 use nix::time::clock_gettime;
 use nix::time::ClockId;
 
-use rppal::gpio::OutputPin;
+use crate::motor::Motor;
 
 #[derive(Copy, Clone)]
 pub struct NoteInfo {
@@ -43,15 +43,15 @@ fn wait_until(target_time: TimeSpec) -> Result<(), Box<dyn Error>> {
     Ok(sleep(Duration::from(max(target_time - now()?, TimeSpec::seconds(0)))))
 }
 
-pub fn play_note_info_array(
-    pins: &mut [&mut OutputPin],
+pub fn play_note_info_array<M: Motor>(
+    pins: &mut [&mut M],
     notes: &mut [NoteInfo],
     voices: &mut [&mut Voice]
 ) -> Result<(), Box<dyn Error>> {
     let start_time: TimeSpec = now()?;
     let mut next_time: TimeSpec = start_time;
 
-    for pin in &mut *pins { pin.set_low(); }
+    for pin in &mut *pins { pin.reset(); }
 
     loop {
         next_time = next_time + TimeSpec::microseconds(TICK_DURATION_MCS.into());
@@ -65,9 +65,9 @@ pub fn play_note_info_array(
             }
 
             if voice.phase >= 0 {
-                pins[note.motor_id as usize].set_high();
+                pins[note.motor_id as usize].advance();
             } else {
-                pins[note.motor_id as usize].set_low();
+                pins[note.motor_id as usize].reset();
             }
 
             voice.phase = (voice.phase as i64 + note.frequency as i64) as i32;

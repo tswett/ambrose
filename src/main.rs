@@ -25,8 +25,8 @@ fn note(next_note_index: u32, motor_id: u8, frequency: u32, length: u32) -> Note
 
 fn main() -> Result<(), Box<dyn Error>> {
     let pins: &mut [&mut OutputPin] = &mut [
-        &mut (Gpio::new()?.get(12)?.into_output()),
-        &mut (Gpio::new()?.get(21)?.into_output()),
+        &mut (Gpio::new()?.get(15)?.into_output()),
+        &mut (Gpio::new()?.get(14)?.into_output()),
     ];
 
     let voices: &mut [&mut Voice] = &mut [&mut voice(0), &mut voice(8)];

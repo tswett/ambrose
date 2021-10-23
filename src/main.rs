@@ -7,15 +7,18 @@ use rodio::Sink;
 
 mod motor;
 mod notes;
+mod timer;
 
+use crate::motor::SimpleAudioMotor;
 use crate::motor::TestMotor;
 use crate::motor::test_motor;
 
-use crate::notes::DummyTimer;
 use crate::notes::NoteInfo;
 use crate::notes::play_note_info_array;
 use crate::notes::Voice;
 use crate::notes::voice;
+
+use crate::timer::SimpleAudioTimer;
 
 fn note(next_note_index: u32, motor_id: u8, frequency: u32, length: u32) -> NoteInfo {
     NoteInfo {
@@ -29,9 +32,9 @@ fn note(next_note_index: u32, motor_id: u8, frequency: u32, length: u32) -> Note
 }
 
 fn play_pachelbel() -> Result<(), Box<dyn Error>> {
-    let pins: Vec<TestMotor> = vec![
-        test_motor(),
-        test_motor(),
+    let pins: Vec<SimpleAudioMotor> = vec![
+        SimpleAudioMotor::new(),
+        SimpleAudioMotor::new(),
     ];
 
     let voices: Vec<Voice> = vec![voice(0), voice(8)];
@@ -124,34 +127,23 @@ fn play_pachelbel() -> Result<(), Box<dyn Error>> {
         },
     ];
 
-    let mut timer: DummyTimer = DummyTimer { };
+    let mut timer: SimpleAudioTimer = SimpleAudioTimer::new(44100, &pins);
 
     println!("Playing...");
     play_note_info_array(pins, notes, voices, &mut timer)?;
-    Ok(())
-}
-
-fn main() -> Result<(), Box<dyn Error>> {
-    let wave: Vec<f32> =
-        iter::repeat(0.1)
-        .take(50)
-        .chain(
-            iter::repeat(-0.1)
-            .take(50))
-        .collect();
-
-    let sound: Vec<f32> = wave.iter().copied().cycle().take(44100).collect();
 
     let (_stream, stream_handle) = OutputStream::try_default()?;
     let sink: Sink = Sink::try_new(&stream_handle)?;
 
-    let buffer: SamplesBuffer<f32> = SamplesBuffer::new(1, 44100, sound);
-
-    println!("Making a horrible noise...");
+    let buffer: SamplesBuffer<f32> = SamplesBuffer::new(1, 44100, timer.data);
 
     sink.append(buffer);
 
     sink.sleep_until_end();
 
     Ok(())
+}
+
+fn main() -> Result<(), Box<dyn Error>> {
+    play_pachelbel()
 }

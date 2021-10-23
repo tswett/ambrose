@@ -1,3 +1,6 @@
+use std::cell::RefCell;
+use std::rc::Rc;
+
 pub trait Motor {
     /// Command the motor to advance one step. 
     fn advance(&mut self);
@@ -20,6 +23,27 @@ impl Motor for TestMotor {
     }
 
     fn reset(&mut self) { }
+}
+
+#[derive(Clone)]
+pub struct SimpleAudioMotor {
+    pub is_high: Rc<RefCell<bool>>,
+}
+
+impl SimpleAudioMotor {
+    pub fn new() -> Self {
+        SimpleAudioMotor { is_high: Rc::new(RefCell::new(false)) }
+    }
+}
+
+impl Motor for SimpleAudioMotor {
+    fn advance(&mut self) {
+        *(self.is_high.borrow_mut()) = true;
+    }
+
+    fn reset(&mut self) {
+        *(self.is_high.borrow_mut()) = false;
+    }
 }
 
 #[cfg(test)]

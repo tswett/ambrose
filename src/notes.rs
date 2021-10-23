@@ -2,6 +2,8 @@ use std::error::Error;
 
 use crate::motor::Motor;
 
+use crate::timer::Timer;
+
 #[derive(Copy, Clone)]
 pub struct NoteInfo {
     pub next_note_index: u32,
@@ -24,26 +26,6 @@ pub fn voice(note_index: u32) -> Voice {
 
 const TICK_FREQUENCY_HZ: u64 = 50000;
 const TICK_DURATION_MCS: u64 = 1000000 / TICK_FREQUENCY_HZ;
-
-pub trait Timer {
-    /// Tell the timer to wait the given number of microseconds.
-    /// The timer is expected to keep track of a "target time," and this
-    /// function is expected to advance the target time by the given number of
-    /// microseconds, then wait until the target time. This way, if, for
-    /// example, we call
-    ///
-    ///   timer.wait_microseconds(10_000);
-    ///
-    /// 360,000 times, then all of the calls combined will take almost exactly
-    /// 3,600,000,000 microseconds, which is to say, one hour.
-    fn wait_microseconds(&mut self, duration: u64);
-}
-
-pub struct DummyTimer { }
-
-impl Timer for DummyTimer {
-    fn wait_microseconds(&mut self, _duration: u64) { }
-}
 
 pub fn play_note_info_array<M: Motor, T: Timer>(
     mut pins: Vec<M>,

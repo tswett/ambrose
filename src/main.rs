@@ -1,4 +1,9 @@
 use std::error::Error;
+use std::iter;
+
+use rodio::buffer::SamplesBuffer;
+use rodio::OutputStream;
+use rodio::Sink;
 
 mod motor;
 mod notes;
@@ -23,7 +28,7 @@ fn note(next_note_index: u32, motor_id: u8, frequency: u32, length: u32) -> Note
     }
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
+fn play_pachelbel() -> Result<(), Box<dyn Error>> {
     let pins: Vec<TestMotor> = vec![
         test_motor(),
         test_motor(),
@@ -123,5 +128,30 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     println!("Playing...");
     play_note_info_array(pins, notes, voices, &mut timer)?;
+    Ok(())
+}
+
+fn main() -> Result<(), Box<dyn Error>> {
+    let wave: Vec<f32> =
+        iter::repeat(0.1)
+        .take(50)
+        .chain(
+            iter::repeat(-0.1)
+            .take(50))
+        .collect();
+
+    let sound: Vec<f32> = wave.iter().copied().cycle().take(44100).collect();
+
+    let (_stream, stream_handle) = OutputStream::try_default()?;
+    let sink: Sink = Sink::try_new(&stream_handle)?;
+
+    let buffer: SamplesBuffer<f32> = SamplesBuffer::new(1, 44100, sound);
+
+    println!("Making a horrible noise...");
+
+    sink.append(buffer);
+
+    sink.sleep_until_end();
+
     Ok(())
 }

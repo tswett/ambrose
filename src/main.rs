@@ -3,9 +3,10 @@ use std::error::Error;
 mod motor;
 mod notes;
 
-use crate::motor::GpioMotor;
-use crate::motor::gpio_motor;
+use crate::motor::TestMotor;
+use crate::motor::test_motor;
 
+use crate::notes::DummyTimer;
 use crate::notes::NoteInfo;
 use crate::notes::play_note_info_array;
 use crate::notes::Voice;
@@ -23,9 +24,9 @@ fn note(next_note_index: u32, motor_id: u8, frequency: u32, length: u32) -> Note
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let pins: Vec<GpioMotor> = vec![
-        gpio_motor(15)?,
-        gpio_motor(14)?,
+    let pins: Vec<TestMotor> = vec![
+        test_motor(),
+        test_motor(),
     ];
 
     let voices: Vec<Voice> = vec![voice(0), voice(8)];
@@ -118,7 +119,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         },
     ];
 
+    let mut timer: DummyTimer = DummyTimer { };
+
     println!("Playing...");
-    play_note_info_array(pins, notes, voices)?;
+    play_note_info_array(pins, notes, voices, &mut timer)?;
     Ok(())
 }

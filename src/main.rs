@@ -7,6 +7,7 @@ use rodio::Sink;
 
 mod motor;
 mod notes;
+mod songs;
 mod timer;
 
 use crate::motor::SimpleAudioMotor;
@@ -17,6 +18,9 @@ use crate::notes::NoteInfo;
 use crate::notes::play_note_info_array;
 use crate::notes::Voice;
 use crate::notes::voice;
+
+use crate::songs::peaceofmind;
+use crate::songs::peaceofmind::SongBuilder;
 
 use crate::timer::SimpleAudioTimer;
 
@@ -29,6 +33,19 @@ fn note(next_note_index: u32, motor_id: u8, frequency: u32, length: u32) -> Note
         length_mcs: (length as u64) * 10000,
         rearticulate: false,
     }
+}
+
+fn play_data(data: Vec<f32>) -> Result<(), Box<dyn Error>> {
+    let (_stream, stream_handle) = OutputStream::try_default()?;
+    let sink: Sink = Sink::try_new(&stream_handle)?;
+
+    let buffer: SamplesBuffer<f32> = SamplesBuffer::new(1, 44100, data);
+
+    sink.append(buffer);
+
+    sink.sleep_until_end();
+
+    Ok(())
 }
 
 fn play_pachelbel() -> Result<(), Box<dyn Error>> {
@@ -132,18 +149,29 @@ fn play_pachelbel() -> Result<(), Box<dyn Error>> {
     println!("Playing...");
     play_note_info_array(pins, notes, voices, &mut timer)?;
 
-    let (_stream, stream_handle) = OutputStream::try_default()?;
-    let sink: Sink = Sink::try_new(&stream_handle)?;
-
-    let buffer: SamplesBuffer<f32> = SamplesBuffer::new(1, 44100, timer.data);
-
-    sink.append(buffer);
-
-    sink.sleep_until_end();
+    play_data(timer.data)?;
 
     Ok(())
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    play_pachelbel()
+    let builder: SongBuilder = peaceofmind::build_song();
+
+    let pins: Vec<SimpleAudioMotor> = vec![
+        SimpleAudioMotor::new(),
+        SimpleAudioMotor::new(),
+    ];
+
+    let voices: Vec<Voice> = builder.voices.into_iter().map(|v| voice(v.first_note_index)).collect();
+
+    let notes: Vec<NoteInfo> = builder.notes;
+
+    let mut timer: SimpleAudioTimer = SimpleAudioTimer::new(44100, &pins);
+
+    println!("Playing...");
+    play_note_info_array(pins, notes, voices, &mut timer)?;
+
+    play_data(timer.data)?;
+
+    Ok(())
 }

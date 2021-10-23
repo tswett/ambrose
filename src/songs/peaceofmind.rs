@@ -1,23 +1,22 @@
 use std::error::Error;
 
-mod motor;
-mod notes;
-
+/*
 use crate::motor::GpioMotor;
 use crate::motor::gpio_motor;
+*/
 
 use crate::notes::NoteInfo;
 use crate::notes::play_note_info_array;
 use crate::notes::Voice;
 use crate::notes::voice;
 
-struct SongBuilder {
-    notes: Vec<NoteInfo>,
-    voices: Vec<VoiceInfo>,
+pub struct SongBuilder {
+    pub notes: Vec<NoteInfo>,
+    pub voices: Vec<VoiceInfo>,
 }
 
-struct VoiceInfo {
-    first_note_index: u32,
+pub struct VoiceInfo {
+    pub first_note_index: u32,
     last_note_index: u32,
 }
 
@@ -87,6 +86,7 @@ impl NoteInfo {
     }
 }
 
+/*
 fn main() -> Result<(), Box<dyn Error>> {
     let builder: SongBuilder = build_song();
 
@@ -103,8 +103,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     play_note_info_array(pins, notes, voices)?;
     Ok(())
 }
+*/
 
-fn build_song() -> SongBuilder {
+pub fn build_song() -> SongBuilder {
     let mut b: SongBuilder = SongBuilder::new();
 
     b.add(0, note(2,  1,  4));           b.add(1, note(4,  8,  2));        // I

@@ -12,6 +12,12 @@ mod notes;
 mod songs;
 mod timer;
 
+#[cfg(feature = "raspi")]
+use crate::motor::{
+    GpioMotor,
+    gpio_motor,
+};
+#[cfg(not(feature = "raspi"))]
 use crate::motor::SimpleAudioMotor;
 
 use crate::notes::NoteInfo;
@@ -22,7 +28,10 @@ use crate::notes::voice;
 use crate::songs::peaceofmind;
 use crate::songs::peaceofmind::SongBuilder;
 
+#[cfg(not(feature = "raspi"))]
 use crate::timer::SimpleAudioTimer;
+#[cfg(feature = "raspi")]
+use crate::timer::NixTimer;
 
 fn note(next_note_index: u32, motor_id: u8, frequency: u32, length: u32) -> NoteInfo {
     NoteInfo {
@@ -35,7 +44,7 @@ fn note(next_note_index: u32, motor_id: u8, frequency: u32, length: u32) -> Note
     }
 }
 
-#[cfg(feature = "rodio")]
+#[cfg(all(not(feature="raspi"), feature = "rodio"))]
 fn play_data(data: Vec<f32>) -> Result<(), Box<dyn Error>> {
     let (_stream, stream_handle) = OutputStream::try_default()?;
     let sink: Sink = Sink::try_new(&stream_handle)?;
@@ -49,14 +58,21 @@ fn play_data(data: Vec<f32>) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-#[cfg(not(feature = "rodio"))]
+#[cfg(all(not(feature="raspi"), not(feature = "rodio")))]
 fn play_data(_data: Vec<f32>) -> Result<(), Box<dyn Error>> {
-    println!("No way to play this. Try running with --features rodio.");
+    println!("No way to play this. Try running with --features raspi or --features rodio.");
 
     Ok(())
 }
 
 fn play_pachelbel() -> Result<(), Box<dyn Error>> {
+    #[cfg(feature = "raspi")]
+    let pins: Vec<GpioMotor> = vec![
+        gpio_motor(15)?,
+        gpio_motor(14)?,
+    ];
+
+    #[cfg(not(feature = "raspi"))]
     let pins: Vec<SimpleAudioMotor> = vec![
         SimpleAudioMotor::new(),
         SimpleAudioMotor::new(),
@@ -152,11 +168,16 @@ fn play_pachelbel() -> Result<(), Box<dyn Error>> {
         },
     ];
 
+    #[cfg(feature = "raspi")]
+    let mut timer: NixTimer = NixTimer::new();
+
+    #[cfg(not(feature = "raspi"))]
     let mut timer: SimpleAudioTimer = SimpleAudioTimer::new(44100, &pins);
 
     println!("Playing...");
     play_note_info_array(pins, notes, voices, &mut timer)?;
 
+    #[cfg(not(feature = "raspi"))]
     play_data(timer.data)?;
 
     Ok(())
@@ -165,6 +186,13 @@ fn play_pachelbel() -> Result<(), Box<dyn Error>> {
 fn main() -> Result<(), Box<dyn Error>> {
     let builder: SongBuilder = peaceofmind::build_song();
 
+    #[cfg(feature = "raspi")]
+    let pins: Vec<GpioMotor> = vec![
+        gpio_motor(15)?,
+        gpio_motor(14)?,
+    ];
+
+    #[cfg(not(feature = "raspi"))]
     let pins: Vec<SimpleAudioMotor> = vec![
         SimpleAudioMotor::new(),
         SimpleAudioMotor::new(),
@@ -174,11 +202,16 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let notes: Vec<NoteInfo> = builder.notes;
 
+    #[cfg(feature = "raspi")]
+    let mut timer: NixTimer = NixTimer::new();
+
+    #[cfg(not(feature = "raspi"))]
     let mut timer: SimpleAudioTimer = SimpleAudioTimer::new(44100, &pins);
 
     println!("Playing...");
     play_note_info_array(pins, notes, voices, &mut timer)?;
 
+    #[cfg(not(feature = "raspi"))]
     play_data(timer.data)?;
 
     Ok(())

@@ -34,9 +34,10 @@ pub fn play_note_info_array<M: Motor, T: Timer>(
     timer: &mut T
 ) -> Result<(), Box<dyn Error>> {
     for pin in &mut *pins { pin.reset(); }
+    timer.reset()?;
 
     loop {
-        timer.wait_microseconds(TICK_DURATION_MCS);
+        timer.wait_microseconds(TICK_DURATION_MCS)?;
 
         for voice in &mut *voices {
             // println!("playing note {}", voice.note_index);

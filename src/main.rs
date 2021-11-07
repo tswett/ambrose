@@ -1,9 +1,11 @@
 use std::error::Error;
-use std::iter;
 
-use rodio::buffer::SamplesBuffer;
-use rodio::OutputStream;
-use rodio::Sink;
+#[cfg(feature = "rodio")]
+use rodio::{
+    buffer::SamplesBuffer,
+    OutputStream,
+    Sink,
+};
 
 mod motor;
 mod notes;
@@ -11,8 +13,6 @@ mod songs;
 mod timer;
 
 use crate::motor::SimpleAudioMotor;
-use crate::motor::TestMotor;
-use crate::motor::test_motor;
 
 use crate::notes::NoteInfo;
 use crate::notes::play_note_info_array;
@@ -35,6 +35,7 @@ fn note(next_note_index: u32, motor_id: u8, frequency: u32, length: u32) -> Note
     }
 }
 
+#[cfg(feature = "rodio")]
 fn play_data(data: Vec<f32>) -> Result<(), Box<dyn Error>> {
     let (_stream, stream_handle) = OutputStream::try_default()?;
     let sink: Sink = Sink::try_new(&stream_handle)?;
@@ -44,6 +45,13 @@ fn play_data(data: Vec<f32>) -> Result<(), Box<dyn Error>> {
     sink.append(buffer);
 
     sink.sleep_until_end();
+
+    Ok(())
+}
+
+#[cfg(not(feature = "rodio"))]
+fn play_data(_data: Vec<f32>) -> Result<(), Box<dyn Error>> {
+    println!("No way to play this. Try running with --features rodio.");
 
     Ok(())
 }

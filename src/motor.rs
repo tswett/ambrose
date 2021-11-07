@@ -13,6 +13,7 @@ pub struct TestMotor {
     count: u64,
 }
 
+#[cfg(test)]
 pub fn test_motor() -> TestMotor {
     TestMotor { count: 0 }
 }

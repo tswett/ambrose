@@ -1,19 +1,24 @@
-use std::cmp::max;
+#[cfg(feature = "raspi")]
+use std::{
+    cmp::max,
+    thread::sleep,
+    time::Duration,
+};
+
 use std::error::Error;
-/*
+#[cfg(not(feature = "raspi"))]
 use std::iter::repeat;
-*/
-use std::thread::sleep;
-use std::time::Duration;
 
-use nix::sys::time::TimeSpec;
-use nix::sys::time::TimeValLike;
-use nix::time::clock_gettime;
-use nix::time::ClockId;
+#[cfg(feature = "raspi")]
+use nix::{
+    sys::time::TimeSpec,
+    sys::time::TimeValLike,
+    time::clock_gettime,
+    time::ClockId,
+};
 
-/*
+#[cfg(not(feature = "raspi"))]
 use crate::motor::SimpleAudioMotor;
-*/
 
 pub trait Timer {
     /// Tell the timer to wait the given number of microseconds.
@@ -39,7 +44,7 @@ impl Timer for DummyTimer {
     fn reset(&mut self) -> Result<(), Box<dyn Error>> { Ok(()) }
 }
 
-/*
+#[cfg(not(feature = "raspi"))]
 pub struct SimpleAudioTimer {
     sample_rate: u32,
     motors: Vec<SimpleAudioMotor>,
@@ -47,6 +52,7 @@ pub struct SimpleAudioTimer {
     pub data: Vec<f32>,
 }
 
+#[cfg(not(feature = "raspi"))]
 impl SimpleAudioTimer {
     pub fn new(sample_rate: u32, motors: &Vec<SimpleAudioMotor>) -> Self {
         SimpleAudioTimer {
@@ -58,8 +64,9 @@ impl SimpleAudioTimer {
     }
 }
 
+#[cfg(not(feature = "raspi"))]
 impl Timer for SimpleAudioTimer {
-    fn wait_microseconds(&mut self, duration: u64) {
+    fn wait_microseconds(&mut self, duration: u64) -> Result<(), Box<dyn Error>> {
         let old_sample_count: u64 =
             (self.sample_rate as u64) * self.time_mcs / 1_000_000;
         self.time_mcs += duration;
@@ -79,25 +86,32 @@ impl Timer for SimpleAudioTimer {
         }
 
         self.data.extend(repeat(new_amplitude).take(samples_to_add as usize));
-    }
-}
-*/
 
+        Ok(())
+    }
+
+    fn reset(&mut self) -> Result<(), Box<dyn Error>> { Ok(()) }
+}
+
+#[cfg(feature = "raspi")]
 pub struct NixTimer {
     next_time: TimeSpec,
 }
 
+#[cfg(feature = "raspi")]
 impl NixTimer {
     pub fn new() -> Self {
         NixTimer { next_time: TimeSpec::seconds(0) }
     }
 }
 
+#[cfg(feature = "raspi")]
 fn now() -> Result<TimeSpec, nix::Error> {
     // return clock_gettime(ClockId::CLOCK_PROCESS_CPUTIME_ID);
     clock_gettime(ClockId::CLOCK_MONOTONIC)
 }
 
+#[cfg(feature = "raspi")]
 impl Timer for NixTimer {
     fn wait_microseconds(&mut self, duration: u64) -> Result<(), Box<dyn Error>> {
         self.next_time = self.next_time + TimeSpec::microseconds(duration as i64);

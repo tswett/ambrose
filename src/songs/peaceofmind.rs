@@ -1,14 +1,9 @@
-use std::error::Error;
-
 /*
 use crate::motor::GpioMotor;
 use crate::motor::gpio_motor;
 */
 
 use crate::notes::NoteInfo;
-use crate::notes::play_note_info_array;
-use crate::notes::Voice;
-use crate::notes::voice;
 
 pub struct SongBuilder {
     pub notes: Vec<NoteInfo>,

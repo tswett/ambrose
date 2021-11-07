@@ -3,6 +3,7 @@ use std::error::Error;
 mod motor;
 mod notes;
 mod songs;
+mod timer;
 
 use crate::motor::GpioMotor;
 use crate::motor::gpio_motor;
@@ -14,6 +15,8 @@ use crate::notes::voice;
 
 use crate::songs::peaceofmind;
 use crate::songs::peaceofmind::SongBuilder;
+
+use crate::timer::NixTimer;
 
 fn note(next_note_index: u32, motor_id: u8, frequency: u32, length: u32) -> NoteInfo {
     NoteInfo {
@@ -122,8 +125,10 @@ fn play_pachelbel() -> Result<(), Box<dyn Error>> {
         },
     ];
 
+    let mut timer: NixTimer = NixTimer::new();
+
     println!("Playing...");
-    play_note_info_array(pins, notes, voices)?;
+    play_note_info_array(pins, notes, voices, &mut timer)?;
     Ok(())
 }
 
@@ -139,8 +144,10 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let notes: Vec<NoteInfo> = builder.notes;
 
+    let mut timer: NixTimer = NixTimer::new();
+
     println!("Playing...");
-    play_note_info_array(pins, notes, voices)?;
+    play_note_info_array(pins, notes, voices, &mut timer)?;
 
     Ok(())
 }

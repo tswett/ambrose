@@ -2,6 +2,7 @@ use std::error::Error;
 
 mod motor;
 mod notes;
+mod songs;
 
 use crate::motor::GpioMotor;
 use crate::motor::gpio_motor;
@@ -10,6 +11,9 @@ use crate::notes::NoteInfo;
 use crate::notes::play_note_info_array;
 use crate::notes::Voice;
 use crate::notes::voice;
+
+use crate::songs::peaceofmind;
+use crate::songs::peaceofmind::SongBuilder;
 
 fn note(next_note_index: u32, motor_id: u8, frequency: u32, length: u32) -> NoteInfo {
     NoteInfo {
@@ -22,7 +26,7 @@ fn note(next_note_index: u32, motor_id: u8, frequency: u32, length: u32) -> Note
     }
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
+fn play_pachelbel() -> Result<(), Box<dyn Error>> {
     let pins: Vec<GpioMotor> = vec![
         gpio_motor(15)?,
         gpio_motor(14)?,
@@ -120,5 +124,23 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     println!("Playing...");
     play_note_info_array(pins, notes, voices)?;
+    Ok(())
+}
+
+fn main() -> Result<(), Box<dyn Error>> {
+    let builder: SongBuilder = peaceofmind::build_song();
+
+    let pins: Vec<GpioMotor> = vec![
+        gpio_motor(15)?,
+        gpio_motor(14)?,
+    ];
+
+    let voices: Vec<Voice> = builder.voices.into_iter().map(|v| voice(v.first_note_index)).collect();
+
+    let notes: Vec<NoteInfo> = builder.notes;
+
+    println!("Playing...");
+    play_note_info_array(pins, notes, voices)?;
+
     Ok(())
 }

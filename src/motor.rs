@@ -87,6 +87,13 @@ impl Motor for SimpleAudioMotor {
 mod tests {
     use crate::motor::*;
 
+    #[cfg(feature = "raspi")]
+    #[test]
+    fn can_create_gpio_motor() -> Result<(), Box<dyn Error>> {
+        let _motor: GpioMotor = gpio_motor(14)?;
+        Ok(())
+    }
+
     #[test]
     fn can_create_test_motor() {
         let mut motor: TestMotor = test_motor();

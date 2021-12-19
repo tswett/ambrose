@@ -14,6 +14,24 @@ pub struct NoteInfo {
     pub rearticulate: bool,
 }
 
+impl NoteInfo {
+    pub fn slur(self) -> Self {
+        NoteInfo { rearticulate: false, ..self }
+    }
+
+    pub fn kick(self) -> Self {
+        NoteInfo { rearticulate: true, ..self }
+    }
+
+    pub fn rest(self) -> Self {
+        NoteInfo { frequency_mchz: 0, ..self }
+    }
+
+    pub fn exit(self) -> Self {
+        NoteInfo { exit: true, ..self }
+    }
+}
+
 pub struct Voice {
     note_index: u32,
     microseconds: u64,

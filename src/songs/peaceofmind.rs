@@ -1,50 +1,5 @@
-/*
-use crate::motor::GpioMotor;
-use crate::motor::gpio_motor;
-*/
-
 use crate::notes::NoteInfo;
-
-pub struct SongBuilder {
-    pub notes: Vec<NoteInfo>,
-    pub voices: Vec<VoiceInfo>,
-}
-
-pub struct VoiceInfo {
-    pub first_note_index: u32,
-    last_note_index: u32,
-}
-
-impl SongBuilder {
-    fn new() -> Self {
-        SongBuilder { notes: Vec::<NoteInfo>::new(), voices: Vec::<VoiceInfo>::new() }
-    }
-
-    fn add(&mut self, voice: u8, note: NoteInfo) {
-        let new_note_index: u32 = self.notes.len() as u32;
-
-        let new_voice: bool = voice as usize == self.voices.len();
-
-        if new_voice {
-            let new_voice = VoiceInfo {
-                first_note_index: new_note_index,
-                last_note_index: new_note_index,
-            };
-
-            self.voices.push(new_voice);
-        }
-
-        let last_note_index: u32 = self.voices[voice as usize].last_note_index;
-
-        if !new_voice {
-            self.notes[last_note_index as usize].next_note_index = new_note_index;
-        }
-
-        self.notes.push(NoteInfo { motor_id: voice, ..note });
-
-        self.voices[voice as usize].last_note_index = new_note_index;
-    }
-}
+use crate::songbuilder::SongBuilder;
 
 const BEAT_DURATION: u64 = 117188;
 
@@ -62,43 +17,6 @@ fn note(octave: i16, pitch: i16, duration: u64) -> NoteInfo {
         rearticulate: true,
     }
 }
-
-impl NoteInfo {
-    fn slur(self) -> Self {
-        NoteInfo { rearticulate: false, ..self }
-    }
-
-    fn kick(self) -> Self {
-        NoteInfo { rearticulate: true, ..self }
-    }
-
-    fn rest(self) -> Self {
-        NoteInfo { frequency_mchz: 0, ..self }
-    }
-
-    fn exit(self) -> Self {
-        NoteInfo { exit: true, ..self }
-    }
-}
-
-/*
-fn main() -> Result<(), Box<dyn Error>> {
-    let builder: SongBuilder = build_song();
-
-    let pins: Vec<GpioMotor> = vec![
-        gpio_motor(15)?,
-        gpio_motor(14)?,
-    ];
-
-    let voices: Vec<Voice> = builder.voices.into_iter().map(|v| voice(v.first_note_index)).collect();
-
-    let notes: Vec<NoteInfo> = builder.notes;
-
-    println!("Playing...");
-    play_note_info_array(pins, notes, voices)?;
-    Ok(())
-}
-*/
 
 pub fn build_song() -> SongBuilder {
     let mut b: SongBuilder = SongBuilder::new();

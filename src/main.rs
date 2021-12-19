@@ -9,6 +9,7 @@ use rodio::{
 
 mod motor;
 mod notes;
+mod songbuilder;
 mod songs;
 mod timer;
 
@@ -25,8 +26,9 @@ use crate::notes::play_note_info_array;
 use crate::notes::Voice;
 use crate::notes::voice;
 
+use crate::songbuilder::SongBuilder;
+
 use crate::songs::peaceofmind;
-use crate::songs::peaceofmind::SongBuilder;
 
 #[cfg(not(feature = "raspi"))]
 use crate::timer::SimpleAudioTimer;

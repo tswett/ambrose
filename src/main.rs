@@ -28,7 +28,7 @@ use crate::notes::voice;
 
 use crate::songbuilder::SongBuilder;
 
-use crate::songs::peaceofmind;
+use crate::songs::hallelujah;
 
 #[cfg(not(feature = "raspi"))]
 use crate::timer::SimpleAudioTimer;
@@ -186,7 +186,7 @@ fn play_pachelbel() -> Result<(), Box<dyn Error>> {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let builder: SongBuilder = peaceofmind::build_song();
+    let builder: SongBuilder = hallelujah::build_song();
 
     #[cfg(feature = "raspi")]
     let pins: Vec<GpioMotor> = vec![
